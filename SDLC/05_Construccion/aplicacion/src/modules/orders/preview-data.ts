@@ -1,0 +1,48 @@
+import type { OrderView } from "@/modules/orders/types";
+
+export const previewOrders: OrderView[] = [
+  {
+    id: "preview-1042",
+    reference: "P-1042",
+    customerLabel: "Cliente de demostración",
+    itemDescription: "Teclado mecánico K552",
+    totalCents: 68000,
+    paidCents: 25000,
+    commercialStatus: "confirmed",
+    fulfillmentStatus: "preparing",
+    createdLabel: "Hoy, 10:42",
+  },
+  {
+    id: "preview-1039",
+    reference: "P-1039",
+    customerLabel: "Cliente de demostración",
+    itemDescription: "Monitor IPS 24 pulgadas",
+    totalCents: 112000,
+    paidCents: 112000,
+    commercialStatus: "confirmed",
+    fulfillmentStatus: "ready",
+    createdLabel: "Ayer, 16:25",
+  },
+  {
+    id: "preview-1038",
+    reference: "P-1038",
+    customerLabel: "Cliente de demostración",
+    itemDescription: "Memoria DDR5 · 16 GB",
+    totalCents: 45000,
+    paidCents: 0,
+    commercialStatus: "confirmed",
+    fulfillmentStatus: "not_started",
+    createdLabel: "Ayer, 14:03",
+  },
+  {
+    id: "preview-1036",
+    reference: "P-1036",
+    customerLabel: "Cliente de demostración",
+    itemDescription: "Galaxy A55 · 256 GB",
+    totalCents: 284000,
+    paidCents: 0,
+    commercialStatus: "confirmed",
+    fulfillmentStatus: "not_started",
+    createdLabel: "Jue., 12:16",
+  },
+];
