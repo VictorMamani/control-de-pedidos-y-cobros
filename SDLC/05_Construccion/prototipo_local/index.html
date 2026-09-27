@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f7f6">
+    <meta name="description" content="Prototipo local de BYTE-CX para registrar pedidos ficticios.">
+    <title>BYTE-CX | Demo de pedidos</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <section id="login-screen" class="login-screen" aria-labelledby="login-title">
+      <main class="login-card">
+        <a class="brand brand-login" href="#inicio" aria-label="BYTE-CX, inicio">
+          <span class="brand-mark">B</span>
+          <span><strong>BYTE-CX</strong><small>Operaciones de venta</small></span>
+        </a>
+        <p class="eyebrow">Prototipo de aprendizaje</p>
+        <h1 id="login-title">Elige un comercio de demostración</h1>
+        <p class="intro">Prueba el registro de pedidos con información inventada. No necesitas crear una cuenta.</p>
+
+        <div class="demo-accounts" aria-label="Comercios de demostración">
+          <button class="account-card" type="button" data-enter-demo="componentes">
+            <span class="account-avatar" aria-hidden="true">BC</span>
+            <span class="account-copy"><strong>ByteLab Componentes</strong><small>Alex Mendoza · Propietario</small></span>
+            <span class="account-arrow" aria-hidden="true">Entrar <span>›</span></span>
+          </button>
+          <button class="account-card" type="button" data-enter-demo="movil">
+            <span class="account-avatar avatar-blue" aria-hidden="true">VM</span>
+            <span class="account-copy"><strong>Valle Móvil</strong><small>Mariela Rojas · Vendedora</small></span>
+            <span class="account-arrow" aria-hidden="true">Entrar <span>›</span></span>
+          </button>
+        </div>
+
+        <aside class="prototype-note" role="note">
+          <strong>Acceso simulado.</strong> Esta demo no tiene usuarios ni contraseñas reales. Los registros viven solo en el almacenamiento local de este navegador; no uses información real.
+        </aside>
+      </main>
+      <footer class="login-footer">BYTE-CX · Investigación y aprendizaje · Datos sintéticos</footer>
+    </section>
+
+    <main id="app" class="app-shell" hidden>
+      <aside class="sidebar" aria-label="Navegación principal">
+        <a class="brand" href="#resumen" aria-label="BYTE-CX, resumen">
+          <span class="brand-mark">B</span>
+          <span><strong>BYTE-CX</strong><small>Operaciones de venta</small></span>
+        </a>
+        <p class="side-label">Espacio de trabajo</p>
+        <nav class="nav-list" aria-label="Secciones">
+          <button class="nav-item active" type="button" data-view="overview"><span class="nav-icon" aria-hidden="true">▦</span>Resumen</button>
+          <button class="nav-item" type="button" data-view="orders"><span class="nav-icon" aria-hidden="true">□</span>Pedidos</button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="workspace-card">
+          <small>Comercio activo</small>
+          <strong id="sidebar-business">Comercio</strong>
+        </div>
+        <div class="user-card">
+          <span id="user-avatar" class="user-avatar" aria-hidden="true">AM</span>
+          <span><strong id="user-name">Usuario demo</strong><small id="user-role">Rol demo</small></span>
+        </div>
+      </aside>
+
+      <div class="main-column">
+        <header class="topbar">
+          <div class="crumb"><span id="header-business">Comercio</span><span aria-hidden="true">/</span><strong id="breadcrumb">Resumen</strong></div>
+          <div class="topbar-actions">
+            <span class="demo-badge"><span aria-hidden="true"></span>Demo local</span>
+            <button class="button button-quiet" type="button" data-reset-demo>Reiniciar demo</button>
+            <button class="button button-quiet" type="button" data-change-account>Cambiar comercio</button>
+          </div>
+        </header>
+
+        <div class="main-content">
+          <div class="local-warning" role="status">
+            <strong>Demo sin backend:</strong> el acceso es ficticio y los datos se guardan en este navegador. Esto no protege información entre clientes.
+          </div>
+
+          <section id="overview-view" class="view" aria-labelledby="overview-title">
+            <div class="page-heading">
+              <div><p class="eyebrow">Panel de operación</p><h1 id="overview-title">Resumen</h1><p class="subtitle">Una vista inicial de los pedidos que este comercio anotó.</p></div>
+              <button class="button button-primary" type="button" data-open-order>＋ <span>Nuevo pedido</span></button>
+            </div>
+
+            <div class="metric-grid" aria-label="Indicadores de pedidos">
+              <article class="metric-card"><span class="metric-label">Pedidos registrados</span><strong id="metric-count" class="metric-value">0</strong><small>En este comercio</small></article>
+              <article class="metric-card"><span class="metric-label">En curso</span><strong id="metric-open" class="metric-value">0</strong><small>Preparación pendiente</small></article>
+              <article class="metric-card"><span class="metric-label">Valor registrado</span><strong id="metric-total" class="metric-value metric-money">Bs 0,00</strong><small>Montos ficticios</small></article>
+            </div>
+
+            <section class="panel" aria-labelledby="recent-title">
+              <div class="panel-heading"><div><h2 id="recent-title">Pedidos recientes</h2><p>Los datos pertenecen al comercio demo seleccionado.</p></div><button class="text-link" type="button" data-view="orders">Ver todos</button></div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Pedido</th><th>Creado</th><th>Preparación</th><th class="align-right">Total</th></tr></thead>
+                  <tbody id="recent-rows"></tbody>
+                </table>
+                <p id="recent-empty" class="empty-state" hidden>Aún no hay pedidos. Crea uno para probar el flujo.</p>
+              </div>
+            </section>
+          </section>
+
+          <section id="orders-view" class="view" aria-labelledby="orders-title" hidden>
+            <div class="page-heading">
+              <div><p class="eyebrow">Seguimiento</p><h1 id="orders-title">Pedidos</h1><p class="subtitle">Registra el producto y el paso actual de preparación.</p></div>
+              <button class="button button-primary" type="button" data-open-order>＋ <span>Nuevo pedido</span></button>
+            </div>
+            <section class="panel" aria-labelledby="all-orders-title">
+              <div class="panel-heading panel-toolbar">
+                <div><h2 id="all-orders-title">Todos los pedidos</h2><p id="orders-caption">0 registros</p></div>
+                <label class="search-field"><span class="sr-only">Buscar pedido</span><span aria-hidden="true">⌕</span><input id="order-search" type="search" placeholder="Buscar producto o código"></label>
+              </div>
+              <div class="filter-row" role="group" aria-label="Filtrar por preparación">
+                <button class="filter-chip active" type="button" data-filter="all" aria-pressed="true">Todos</button>
+                <button class="filter-chip" type="button" data-filter="Sin iniciar" aria-pressed="false">Sin iniciar</button>
+                <button class="filter-chip" type="button" data-filter="En preparación" aria-pressed="false">En preparación</button>
+                <button class="filter-chip" type="button" data-filter="Listo para entregar" aria-pressed="false">Listos</button>
+                <button class="filter-chip" type="button" data-filter="Entregado" aria-pressed="false">Entregados</button>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Pedido</th><th>Creado</th><th>Preparación</th><th class="align-right">Total</th></tr></thead>
+                  <tbody id="order-rows"></tbody>
+                </table>
+                <p id="orders-empty" class="empty-state" hidden>No hay pedidos para este filtro.</p>
+              </div>
+            </section>
+            <p class="scope-note">En este primer corte todavía no se registran cobros. Ese será el siguiente flujo después de revisar el registro de pedidos.</p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <dialog id="order-dialog" class="dialog" aria-labelledby="dialog-title">
+      <form id="order-form" novalidate>
+        <div class="dialog-heading"><div><p class="eyebrow">Nuevo registro</p><h2 id="dialog-title">Crear pedido</h2><p>El número y la fecha se asignan al guardar.</p></div><button class="icon-button" type="button" data-close-dialog aria-label="Cerrar formulario">×</button></div>
+        <div class="form-fields">
+          <div class="field"><label for="product-name">Producto o componente</label><input id="product-name" name="product" required maxlength="100" placeholder="Ej. SSD NVMe 1 TB"><small>Usa un producto ficticio en esta demo.</small></div>
+          <div class="field"><label for="variant">Modelo o variante <span>(opcional)</span></label><input id="variant" name="variant" maxlength="100" placeholder="Capacidad, color, modelo…"></div>
+          <div class="field-pair">
+            <div class="field"><label for="quantity">Cantidad</label><input id="quantity" name="quantity" type="number" min="1" max="999" step="1" value="1" required></div>
+            <div class="field"><label for="unit-price">Precio unitario (Bs)</label><input id="unit-price" name="unitPrice" type="number" min="0.01" max="10000000" step="0.01" placeholder="0,00" required></div>
+          </div>
+          <div class="total-preview"><span>Total del pedido</span><strong id="order-total-preview">Bs 0,00</strong></div>
+          <div class="field"><label for="fulfillment-status">Preparación</label><select id="fulfillment-status" name="status"><option>Sin iniciar</option><option>En preparación</option><option>Listo para entregar</option><option>Entregado</option></select></div>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+        </div>
+        <div class="dialog-actions"><button class="button" type="button" data-close-dialog>Cancelar</button><button class="button button-primary" type="submit">Guardar pedido</button></div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

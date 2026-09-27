@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7f6">
+  <meta name="description" content="Prototipo visual local de control de pedidos y cobros. Datos ficticios.">
+  <title>BYTE-CX · Control de pedidos</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182b38;
+      --muted: #687c88;
+      --line: #e4ebea;
+      --surface: #fff;
+      --canvas: #f4f7f6;
+      --nav: #18332f;
+      --nav-muted: #b4c8c2;
+      --green: #18745c;
+      --green-soft: #e5f4ee;
+      --amber: #9a6416;
+      --amber-soft: #fff3dc;
+      --blue: #376694;
+      --blue-soft: #eaf2fb;
+      --rose: #9a4e46;
+      --rose-soft: #faece9;
+      --shadow: 0 10px 35px rgb(28 54 62 / 5%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--canvas); color: var(--ink); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+    .app { min-height: 100vh; }
+    .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 2; display: flex; width: 248px; flex-direction: column; background: var(--nav); color: #fff; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 26px 22px 28px; }
+    .brand-mark { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 12px; background: #e1f4e8; color: var(--nav); font-size: 16px; font-weight: 800; letter-spacing: -.06em; }
+    .brand strong { display: block; font-size: 15px; letter-spacing: .02em; }
+    .brand small { display: block; margin-top: 3px; color: var(--nav-muted); font-size: 11px; }
+    .side-label { margin: 6px 22px 10px; color: #91aaa2; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .nav-list { display: grid; gap: 5px; padding: 0 12px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--nav-muted); text-align: left; font-size: 13px; }
+    .nav-item:hover, .nav-item.active { background: #294840; color: #fff; }
+    .nav-item.active .icon { color: #9ed8b5; }
+    .side-spacer { flex: 1; }
+    .workspace-card { margin: 14px; padding: 14px; border: 1px solid #36554d; border-radius: 12px; background: #203e37; }
+    .workspace-card small { color: #b1c7bf; font-size: 11px; }
+    .workspace-card strong { display: block; margin-top: 5px; font-size: 13px; }
+    .workspace-person { display: flex; align-items: center; gap: 10px; padding: 17px 20px 20px; border-top: 1px solid #345048; }
+    .avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #dcefe4; color: #285746; font-size: 12px; font-weight: 750; }
+    .workspace-person strong { display: block; font-size: 12px; }
+    .workspace-person small { display: block; margin-top: 3px; color: var(--nav-muted); font-size: 10px; }
+    .main { min-height: 100vh; margin-left: 248px; }
+    .topbar { display: flex; height: 68px; align-items: center; justify-content: space-between; padding: 0 38px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / 86%); }
+    .crumb { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .crumb strong { color: var(--ink); font-weight: 650; }
+    .top-actions { display: flex; align-items: center; gap: 17px; }
+    .demo-flag { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid #f0d9a6; border-radius: 20px; background: #fff9eb; color: #815713; font-size: 10px; font-weight: 650; }
+    .demo-dot { width: 6px; height: 6px; border-radius: 50%; background: #d3972d; }
+    .main-inner { width: min(1320px, 100%); margin: 0 auto; padding: 34px 38px 54px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 25px; }
+    .eyebrow { margin: 0 0 8px; color: var(--green); font-size: 10px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(23px, 2.5vw, 30px); font-weight: 720; letter-spacing: -.045em; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font-size: 12px; font-weight: 650; box-shadow: 0 1px 2px rgb(20 42 50 / 3%); }
+    .button:hover { border-color: #afc7be; background: #fbfdfc; }
+    .button-primary { border-color: var(--green); background: var(--green); color: #fff; box-shadow: 0 4px 10px rgb(24 116 92 / 14%); }
+    .button-primary:hover { border-color: #105f4a; background: #105f4a; }
+    .button .icon { width: 16px; height: 16px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 22px; }
+    .stat-card { padding: 17px 18px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stat-label { color: var(--muted); font-size: 11px; font-weight: 560; }
+    .stat-icon { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 9px; background: var(--green-soft); color: var(--green); }
+    .stat-icon.amber { background: var(--amber-soft); color: var(--amber); }
+    .stat-icon.blue { background: var(--blue-soft); color: var(--blue); }
+    .stat-value { margin-top: 14px; font-size: 25px; font-weight: 730; letter-spacing: -.04em; }
+    .stat-note { margin-top: 5px; color: #819099; font-size: 10px; }
+    .stat-note b { color: var(--green); font-weight: 650; }
+    .content-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .9fr); gap: 18px; align-items: start; }
+    .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 18px 19px; border-bottom: 1px solid var(--line); }
+    .panel-title { margin: 0; font-size: 13px; font-weight: 700; }
+    .panel-caption { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .text-button { padding: 5px 0; border: 0; background: transparent; color: var(--green); font-size: 11px; font-weight: 650; }
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 13px 19px; border-bottom: 1px solid var(--line); }
+    .filter { padding: 6px 10px; border: 1px solid transparent; border-radius: 18px; background: transparent; color: var(--muted); font-size: 10px; }
+    .filter.active { border-color: #d6e8df; background: #edf7f1; color: var(--green); font-weight: 700; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 11px 13px; border-bottom: 1px solid var(--line); color: #839199; font-size: 9px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+    th:first-child, td:first-child { padding-left: 19px; }
+    th:last-child, td:last-child { padding-right: 19px; }
+    td { padding: 13px; border-bottom: 1px solid #edf1f0; color: #40535e; font-size: 10px; vertical-align: middle; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .product-cell { display: flex; align-items: center; gap: 10px; }
+    .product-icon { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border-radius: 9px; background: #f0f5f4; color: #5e7770; }
+    .product-icon .icon { width: 16px; height: 16px; }
+    .product-name { display: block; color: var(--ink); font-size: 10px; font-weight: 650; }
+    .product-meta { display: block; margin-top: 4px; color: #87959b; font-size: 9px; }
+    .order-code { color: var(--green); font-weight: 700; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 20px; font-size: 9px; font-weight: 650; line-height: 1.25; white-space: normal; }
+    .badge::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .badge-green { background: var(--green-soft); color: #287455; }
+    .badge-amber { background: var(--amber-soft); color: var(--amber); }
+    .badge-blue { background: var(--blue-soft); color: var(--blue); }
+    .badge-rose { background: var(--rose-soft); color: var(--rose); }
+    .amount { color: var(--ink); font-weight: 650; }
+    .row-action { padding: 5px; border: 0; border-radius: 6px; background: transparent; color: #75858c; }
+    .row-action:hover { background: #f1f6f3; color: var(--green); }
+    .attention-list { display: grid; }
+    .attention-item { display: flex; gap: 11px; padding: 15px 18px; border-bottom: 1px solid #edf1f0; }
+    .attention-item:last-child { border-bottom: 0; }
+    .attention-symbol { display: grid; width: 30px; height: 30px; flex: none; place-items: center; border-radius: 9px; background: var(--amber-soft); color: var(--amber); }
+    .attention-symbol .icon { width: 15px; height: 15px; }
+    .attention-copy strong { display: block; color: #344953; font-size: 10px; font-weight: 680; line-height: 1.5; }
+    .attention-copy small { display: block; margin-top: 4px; color: #89969c; font-size: 9px; line-height: 1.45; }
+    .soft-callout { margin: 13px 15px 15px; padding: 12px; border: 1px solid #deebe4; border-radius: 9px; background: #f6faf7; color: #5b7568; font-size: 9px; line-height: 1.55; }
+    .soft-callout strong { color: #315d49; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .search { display: flex; width: min(320px, 100%); height: 38px; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #84939a; }
+    .search .icon { width: 15px; height: 15px; }
+    .search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 11px; }
+    .search input::placeholder { color: #9aa7ac; }
+    .detail-back { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 17px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 11px; }
+    .detail-back:hover { color: var(--green); }
+    .detail-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(270px, .8fr); gap: 18px; align-items: start; }
+    .detail-card { margin-bottom: 16px; padding: 19px; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: var(--shadow); }
+    .detail-card h2 { margin: 0; font-size: 12px; font-weight: 700; }
+    .detail-card p.card-sub { margin: 5px 0 17px; color: var(--muted); font-size: 10px; }
+    .detail-product { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #edf1f0; border-bottom: 1px solid #edf1f0; }
+    .detail-product .product-icon { width: 42px; height: 42px; }
+    .detail-product strong { display: block; font-size: 11px; }
+    .detail-product small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .detail-price { margin-left: auto; color: var(--ink); font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #edf1f0; font-size: 10px; }
+    .detail-row:last-child { border-bottom: 0; }
+    .detail-row span:first-child { color: var(--muted); }
+    .detail-row span:last-child { color: var(--ink); font-weight: 620; text-align: right; }
+    .timeline { display: grid; gap: 0; margin-top: 17px; }
+    .timeline-item { display: grid; grid-template-columns: 18px 1fr; gap: 10px; padding-bottom: 17px; }
+    .timeline-mark { position: relative; display: flex; justify-content: center; }
+    .timeline-mark::before { width: 8px; height: 8px; border: 2px solid #81b89b; border-radius: 50%; background: #fff; content: ""; }
+    .timeline-item:not(:last-child) .timeline-mark::after { position: absolute; top: 12px; bottom: -4px; width: 1px; background: #dce9e2; content: ""; }
+    .timeline-copy strong { display: block; color: #3a505b; font-size: 10px; font-weight: 660; }
+    .timeline-copy small { display: block; margin-top: 4px; color: #89969c; font-size: 9px; }
+    .notice { padding: 11px 12px; border-radius: 8px; background: #f6faf7; color: #61776d; font-size: 9px; line-height: 1.55; }
+    .mobile-nav { display: none; }
+    .screen[hidden] { display: none; }
+    dialog { width: min(470px, calc(100% - 28px)); padding: 0; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 25px 100px rgb(13 33 39 / 24%); }
+    dialog::backdrop { background: rgb(19 39 45 / 35%); backdrop-filter: blur(2px); }
+    .dialog-head { display: flex; justify-content: space-between; gap: 14px; padding: 19px; border-bottom: 1px solid var(--line); }
+    .dialog-head h2 { margin: 0; font-size: 15px; }
+    .dialog-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .close-button { align-self: flex-start; padding: 4px; border: 0; background: transparent; color: var(--muted); }
+    .dialog-body { display: grid; gap: 13px; padding: 19px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: #455a64; font-size: 10px; font-weight: 650; }
+    .field label span { color: #87969c; font-weight: 450; }
+    .field input, .field select { width: 100%; min-height: 38px; padding: 0 10px; border: 1px solid #dfe8e5; border-radius: 7px; background: #fff; color: var(--ink); font-size: 11px; }
+    .dialog-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 0 19px 19px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 5; max-width: 340px; padding: 12px 15px; border: 1px solid #c7dfd1; border-radius: 9px; background: #f2faf4; color: #345d47; box-shadow: var(--shadow); font-size: 11px; }
+    .toast[hidden] { display: none; }
+    @media (max-width: 1100px) {
+      .sidebar { width: 218px; }
+      .main { margin-left: 218px; }
+      .main-inner { padding-right: 25px; padding-left: 25px; }
+      .topbar { padding: 0 25px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .content-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding-bottom: 62px; }
+      .topbar { height: 58px; padding: 0 17px; }
+      .top-actions { gap: 0; }
+      .demo-flag { padding: 6px 8px; font-size: 9px; }
+      .crumb { font-size: 10px; }
+      .main-inner { padding: 24px 16px 32px; }
+      .page-heading { align-items: flex-start; }
+      .page-heading .button { min-height: 36px; padding: 0 10px; font-size: 10px; }
+      .page-heading .button .icon { display: none; }
+      .subtitle { max-width: 390px; font-size: 11px; }
+      .stats { gap: 10px; }
+      .stat-card { padding: 13px; }
+      .stat-label { font-size: 10px; }
+      .stat-value { font-size: 21px; }
+      .content-grid, .detail-layout { grid-template-columns: 1fr; }
+      .panel-head { padding: 15px; }
+      .filters { padding: 11px 14px; }
+      table, tbody, tr, td { display: block; width: 100%; }
+      thead { display: none; }
+      tbody { padding: 2px 14px; }
+      tr { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; padding: 13px 0; border-bottom: 1px solid #edf1f0; }
+      tbody tr:last-child { border-bottom: 0; }
+      td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; border: 0; font-size: 10px; white-space: normal; }
+      td:first-child { grid-column: 1 / -1; padding: 0 0 7px; }
+      td:first-child::before { display: none; }
+      td:last-child { padding-right: 0; }
+      td::before { color: #8a989e; content: attr(data-label); font-size: 9px; }
+      td[data-label=""] { display: none; }
+      .product-name { font-size: 10px; }
+      .mobile-nav { position: fixed; inset: auto 0 0; z-index: 3; display: flex; justify-content: space-around; padding: 7px 7px max(7px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgb(255 255 255 / 96%); }
+      .mobile-nav .nav-item { display: grid; min-width: 65px; min-height: 45px; justify-items: center; gap: 2px; padding: 5px; border-radius: 8px; font-size: 8px; }
+      .mobile-nav .nav-item .icon { width: 16px; height: 16px; }
+      .toolbar { align-items: stretch; }
+      .search { flex: 1; }
+      .detail-card { padding: 16px; }
+      .toast { right: 12px; bottom: 72px; left: 12px; max-width: none; }
+    }
+    @media (max-width: 390px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat-card { padding: 11px; }
+      .stat-icon { width: 27px; height: 27px; }
+      .page-heading { gap: 8px; }
+      .page-heading .button { max-width: 100px; white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M7 3h8l5 5v13H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/><path d="M15 3v6h5M8 13h7M8 17h8"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 6-7"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.1.9-1.1 1.9-1.4-.5a8 8 0 0 1-1.7 1l-.2 1.5h-2.2l-.3-1.5a8 8 0 0 1-1.7-1l-1.4.5-1.1-1.9 1.1-.9a7.6 7.6 0 0 1 0-2l-1.1-.9 1.1-1.9 1.4.5a8 8 0 0 1 1.7-1l.3-1.5h2.2l.2 1.5a8 8 0 0 1 1.7 1l1.4-.5 1.1 1.9-1.1.9a7.6 7.6 0 0 1 0 2Z" transform="translate(-2 -1)"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 8h18M16 14h2"/><path d="M6 5V3h12v2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5M12 17h.01"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 15h8"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  </svg>
+
+  <div class="app">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="brand"><span class="brand-mark">B</span><span><strong>BYTE-CX</strong><small>Operaciones de venta</small></span></div>
+      <p class="side-label">Espacio de trabajo</p>
+      <nav class="nav-list">
+        <button class="nav-item active" data-go="overview"><svg class="icon"><use href="#i-grid"/></svg>Resumen</button>
+        <button class="nav-item" data-go="orders"><svg class="icon"><use href="#i-box"/></svg>Pedidos <span style="margin-left:auto;color:#9ed8b5;font-size:10px">8</span></button>
+        <button class="nav-item" data-go="quotes"><svg class="icon"><use href="#i-note"/></svg>Cotizaciones</button>
+        <button class="nav-item" data-go="overview"><svg class="icon"><use href="#i-chart"/></svg>Reportes</button>
+      </nav>
+      <div class="side-spacer"></div>
+      <div class="workspace-card"><small>Comercio de demostración</small><strong>BYTE-CX · Tienda Demo</strong></div>
+      <button class="nav-item" style="margin:0 12px 12px"><svg class="icon"><use href="#i-settings"/></svg>Configuración</button>
+      <div class="workspace-person"><span class="avatar">AM</span><span><strong>Alex Mendoza</strong><small>Administrador</small></span></div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="crumb"><span>BYTE-CX</span><svg class="icon" style="width:13px;height:13px"><use href="#i-chevron"/></svg><strong id="breadcrumb">Resumen</strong></div>
+        <div class="top-actions"><span class="demo-flag"><span class="demo-dot"></span>Prototipo · datos ficticios</span></div>
+      </header>
+
+      <main class="main-inner">
+        <section class="screen" id="overview">
+          <div class="page-heading">
+            <div><p class="eyebrow">Viernes, 25 de septiembre</p><h1>Resumen de operaciones</h1><p class="subtitle">Hola, Alex. Aquí tienes el estado de los pedidos de tu comercio.</p></div>
+            <button class="button button-primary" data-open-dialog><svg class="icon"><use href="#i-plus"/></svg>Nuevo registro</button>
+          </div>
+          <div class="stats">
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Pedidos en marcha</span><span class="stat-icon"><svg class="icon"><use href="#i-box"/></svg></span></div><div class="stat-value">08</div><div class="stat-note"><b>3 listos</b> para entregar</div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Cotizaciones abiertas</span><span class="stat-icon blue"><svg class="icon"><use href="#i-note"/></svg></span></div><div class="stat-value">12</div><div class="stat-note">4 esperan respuesta</div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Por cobrar</span><span class="stat-icon amber"><svg class="icon"><use href="#i-wallet"/></svg></span></div><div class="stat-value">Bs 4.280</div><div class="stat-note">Anotado manualmente</div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Necesitan atención</span><span class="stat-icon amber"><svg class="icon"><use href="#i-bell"/></svg></span></div><div class="stat-value">03</div><div class="stat-note">Revisar próximos pasos</div></article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel" aria-labelledby="recent-title">
+              <div class="panel-head"><div><h2 class="panel-title" id="recent-title">Actividad reciente</h2><p class="panel-caption">Pedidos y cotizaciones actualizados recientemente</p></div><button class="text-button" data-go="orders">Ver todos <span aria-hidden="true">→</span></button></div>
+              <div class="filters" aria-label="Filtros de actividad"><button class="filter active">Todo</button><button class="filter">Pedidos</button><button class="filter">Cotizaciones</button><button class="filter">Requieren atención</button></div>
+              <div class="table-wrap"><table><thead><tr><th>Registro</th><th>Etapa comercial</th><th>Preparación</th><th>Cobro</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-keyboard"/></svg></span><span><span class="product-name">Teclado mecánico K552</span><span class="product-meta"><span class="order-code">P-1042</span> · Hoy, 10:42</span></span></div></td><td data-label="Comercial"><span class="badge badge-green">Pedido confirmado</span></td><td data-label="Preparación"><span class="badge badge-blue">En preparación</span></td><td data-label="Cobro"><span class="badge badge-amber">Parcial</span></td><td data-label=""><button class="row-action" aria-label="Abrir pedido P-1042" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+                  <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-phone"/></svg></span><span><span class="product-name">Galaxy A55 · 256 GB</span><span class="product-meta"><span class="order-code">C-1041</span> · Hoy, 09:18</span></span></div></td><td data-label="Comercial"><span class="badge badge-blue">Cotización enviada</span></td><td data-label="Preparación"><span style="color:#96a2a7">No aplica</span></td><td data-label="Cobro"><span style="color:#96a2a7">No aplica</span></td><td data-label=""><button class="row-action" aria-label="Abrir cotización" data-go="quotes"><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+                  <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-monitor"/></svg></span><span><span class="product-name">Monitor IPS 24 pulgadas</span><span class="product-meta"><span class="order-code">P-1039</span> · Ayer, 16:25</span></span></div></td><td data-label="Comercial"><span class="badge badge-green">Pedido confirmado</span></td><td data-label="Preparación"><span class="badge badge-amber">Listo para retiro</span></td><td data-label="Cobro"><span class="badge badge-green">Confirmado manualmente</span></td><td data-label=""><button class="row-action" aria-label="Abrir pedido P-1039" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+                  <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-box"/></svg></span><span><span class="product-name">Memoria DDR5 · 16 GB</span><span class="product-meta"><span class="order-code">P-1038</span> · Ayer, 14:03</span></span></div></td><td data-label="Comercial"><span class="badge badge-green">Pedido confirmado</span></td><td data-label="Preparación"><span class="badge badge-blue">Sin iniciar</span></td><td data-label="Cobro"><span class="badge badge-rose">Pendiente</span></td><td data-label=""><button class="row-action" aria-label="Abrir pedido" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+                </tbody></table></div>
+            </section>
+
+            <section class="panel" aria-labelledby="attention-title">
+              <div class="panel-head"><div><h2 class="panel-title" id="attention-title">Siguientes pasos</h2><p class="panel-caption">Pendientes para revisar</p></div><span class="badge badge-amber">3 pendientes</span></div>
+              <div class="attention-list">
+                <div class="attention-item"><span class="attention-symbol"><svg class="icon"><use href="#i-clock"/></svg></span><span class="attention-copy"><strong>Confirmar disponibilidad</strong><small>Cotización C-1041 · Galaxy A55<br>Hace 2 horas</small></span></div>
+                <div class="attention-item"><span class="attention-symbol"><svg class="icon"><use href="#i-wallet"/></svg></span><span class="attention-copy"><strong>Revisar cobro pendiente</strong><small>Pedido P-1038 · Bs 1.250<br>Ayer, 14:03</small></span></div>
+                <div class="attention-item"><span class="attention-symbol"><svg class="icon"><use href="#i-box"/></svg></span><span class="attention-copy"><strong>Actualizar preparación</strong><small>Pedido P-1042 · Teclado K552<br>Hace 35 minutos</small></span></div>
+              </div>
+              <div class="soft-callout"><strong>Recordatorio:</strong> la disponibilidad y los cobros que aparecen aquí son anotaciones del comercio; el prototipo no consulta inventario ni confirma pagos.</div>
+            </section>
+          </div>
+        </section>
+
+        <section class="screen" id="orders" hidden>
+          <div class="page-heading"><div><p class="eyebrow">Seguimiento</p><h1>Pedidos</h1><p class="subtitle">Consulta preparación, entrega y cobro desde un solo lugar.</p></div><button class="button button-primary" data-open-dialog><svg class="icon"><use href="#i-plus"/></svg>Nuevo pedido</button></div>
+          <div class="stats">
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Todos los pedidos</span><span class="stat-icon"><svg class="icon"><use href="#i-box"/></svg></span></div><div class="stat-value">08</div><div class="stat-note">En seguimiento</div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">En preparación</span><span class="stat-icon blue"><svg class="icon"><use href="#i-clock"/></svg></span></div><div class="stat-value">03</div><div class="stat-note">Actualización manual</div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Listos para entregar</span><span class="stat-icon"><svg class="icon"><use href="#i-arrow"/></svg></span></div><div class="stat-value">03</div><div class="stat-note">Coordinar el traspaso</div></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Cobro pendiente</span><span class="stat-icon amber"><svg class="icon"><use href="#i-wallet"/></svg></span></div><div class="stat-value">Bs 4.280</div><div class="stat-note">Monto ficticio</div></article>
+          </div>
+          <section class="panel"><div class="panel-head"><div><h2 class="panel-title">Todos los pedidos</h2><p class="panel-caption">8 registros · ordenados por actividad reciente</p></div><button class="button">Filtros <svg class="icon"><use href="#i-chevron"/></svg></button></div>
+            <div class="filters"><button class="filter active">Todos</button><button class="filter">Sin iniciar</button><button class="filter">En preparación</button><button class="filter">Listos</button><button class="filter">Cobros pendientes</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Fecha</th><th>Preparación / entrega</th><th>Cobro</th><th>Total</th><th></th></tr></thead><tbody>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-keyboard"/></svg></span><span><span class="product-name">Teclado mecánico K552</span><span class="product-meta"><span class="order-code">P-1042</span> · 1 producto</span></span></div></td><td data-label="Fecha">Hoy, 10:42</td><td data-label="Preparación"><span class="badge badge-blue">En preparación</span></td><td data-label="Cobro"><span class="badge badge-amber">Parcial</span></td><td data-label="Total" class="amount">Bs 690</td><td data-label=""><button class="row-action" aria-label="Abrir pedido" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-monitor"/></svg></span><span><span class="product-name">Monitor IPS 24 pulgadas</span><span class="product-meta"><span class="order-code">P-1039</span> · 1 producto</span></span></div></td><td data-label="Fecha">Ayer, 16:25</td><td data-label="Preparación"><span class="badge badge-amber">Listo para retiro</span></td><td data-label="Cobro"><span class="badge badge-green">Confirmado manualmente</span></td><td data-label="Total" class="amount">Bs 1.480</td><td data-label=""><button class="row-action" aria-label="Abrir pedido" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-box"/></svg></span><span><span class="product-name">Memoria DDR5 · 16 GB</span><span class="product-meta"><span class="order-code">P-1038</span> · 1 producto</span></span></div></td><td data-label="Fecha">Ayer, 14:03</td><td data-label="Preparación"><span class="badge badge-blue">Sin iniciar</span></td><td data-label="Cobro"><span class="badge badge-rose">Pendiente</span></td><td data-label="Total" class="amount">Bs 1.250</td><td data-label=""><button class="row-action" aria-label="Abrir pedido" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-phone"/></svg></span><span><span class="product-name">Cargador USB-C 45 W</span><span class="product-meta"><span class="order-code">P-1035</span> · 1 producto</span></span></div></td><td data-label="Fecha">23 sep, 11:36</td><td data-label="Preparación"><span class="badge badge-green">Entregado</span></td><td data-label="Cobro"><span class="badge badge-green">Confirmado manualmente</span></td><td data-label="Total" class="amount">Bs 210</td><td data-label=""><button class="row-action" aria-label="Abrir pedido" data-open-detail><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+            </tbody></table></div></section>
+        </section>
+
+        <section class="screen" id="quotes" hidden>
+          <div class="page-heading"><div><p class="eyebrow">Antes de confirmar</p><h1>Cotizaciones</h1><p class="subtitle">Registra propuestas y continúa el seguimiento cuando recibas una respuesta.</p></div><button class="button button-primary" data-open-dialog><svg class="icon"><use href="#i-plus"/></svg>Nueva cotización</button></div>
+          <section class="panel"><div class="panel-head"><div><h2 class="panel-title">Propuestas recientes</h2><p class="panel-caption">Compartir y registrar respuesta se hace por el canal habitual del comercio.</p></div><span class="badge badge-blue">12 abiertas</span></div>
+            <div class="filters"><button class="filter active">Todas</button><button class="filter">Borrador</button><button class="filter">Enviadas</button><button class="filter">Por vencer</button><button class="filter">No concretadas</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Cotización</th><th>Estado</th><th>Última actualización</th><th>Vigencia</th><th>Total propuesto</th><th></th></tr></thead><tbody>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-phone"/></svg></span><span><span class="product-name">Galaxy A55 · 256 GB</span><span class="product-meta"><span class="order-code">C-1041</span> · 1 producto</span></span></div></td><td data-label="Estado"><span class="badge badge-blue">Enviada</span></td><td data-label="Actualización">Hoy, 09:18</td><td data-label="Vigencia">Sin fecha</td><td data-label="Total" class="amount">Bs 2.940</td><td data-label=""><button class="row-action" aria-label="Ver cotización"><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-monitor"/></svg></span><span><span class="product-name">Monitor y soporte VESA</span><span class="product-meta"><span class="order-code">C-1037</span> · 2 productos</span></span></div></td><td data-label="Estado"><span class="badge badge-amber">Borrador</span></td><td data-label="Actualización">Ayer, 16:40</td><td data-label="Vigencia">Sin fecha</td><td data-label="Total" class="amount">Bs 1.720</td><td data-label=""><button class="row-action" aria-label="Ver cotización"><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+              <tr><td data-label=""><div class="product-cell"><span class="product-icon"><svg class="icon"><use href="#i-keyboard"/></svg></span><span><span class="product-name">Teclado inalámbrico K380</span><span class="product-meta"><span class="order-code">C-1032</span> · 1 producto</span></span></div></td><td data-label="Estado"><span class="badge badge-rose">Sin respuesta</span></td><td data-label="Actualización">22 sep, 12:05</td><td data-label="Vigencia">Por confirmar</td><td data-label="Total" class="amount">Bs 420</td><td data-label=""><button class="row-action" aria-label="Ver cotización"><svg class="icon"><use href="#i-chevron"/></svg></button></td></tr>
+            </tbody></table></div></section>
+          <div class="soft-callout"><strong>Nota del prototipo:</strong> “Enviada” indica que una persona la compartió por su cuenta. No se integra WhatsApp, correo ni otro canal.</div>
+        </section>
+
+        <section class="screen" id="detail" hidden>
+          <button class="detail-back" data-go="orders"><svg class="icon" style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-arrow"/></svg>Volver a pedidos</button>
+          <div class="page-heading"><div><p class="eyebrow">Pedido P-1042 · Creado hoy a las 10:42</p><h1>Teclado mecánico K552</h1><p class="subtitle">Pedido confirmado · La disponibilidad fue anotada manualmente.</p></div><button class="button">Más acciones <svg class="icon"><use href="#i-chevron"/></svg></button></div>
+          <div class="detail-layout">
+            <div>
+              <section class="detail-card"><h2>Productos del pedido</h2><p class="card-sub">El registro conserva la variante y el precio acordado.</p><div class="detail-product"><span class="product-icon"><svg class="icon"><use href="#i-keyboard"/></svg></span><span><strong>Redragon K552 · switch red</strong><small>Color negro · Cantidad 1</small></span><span class="detail-price">Bs 690</span></div><div class="detail-row"><span>Disponibilidad</span><span>Por confirmar en tienda</span></div><div class="detail-row"><span>Total acordado</span><span>Bs 690</span></div><div class="detail-row"><span>Nota</span><span>Retiro por coordinar</span></div></section>
+              <section class="detail-card"><h2>Preparación y entrega</h2><p class="card-sub">Actualización manual del equipo.</p><div class="detail-row"><span>Estado actual</span><span><span class="badge badge-blue">En preparación</span></span></div><div class="detail-row"><span>Próximo paso</span><span>Confirmar que está listo</span></div><div class="detail-row"><span>Responsable</span><span>Alex Mendoza</span></div><div class="notice" style="margin-top:10px">No se consulta stock, transporte o ubicación. Este estado lo actualiza el comercio.</div></section>
+              <section class="detail-card"><h2>Historial</h2><p class="card-sub">Cambios anotados en este pedido.</p><div class="timeline"><div class="timeline-item"><span class="timeline-mark"></span><span class="timeline-copy"><strong>Pedido confirmado</strong><small>Hoy, 10:42 · Alex Mendoza</small></span></div><div class="timeline-item"><span class="timeline-mark"></span><span class="timeline-copy"><strong>Cobro parcial anotado</strong><small>Hoy, 10:45 · Bs 200 · Confirmación manual</small></span></div><div class="timeline-item"><span class="timeline-mark"></span><span class="timeline-copy"><strong>Preparación iniciada</strong><small>Hoy, 11:02 · Alex Mendoza</small></span></div></div></section>
+            </div>
+            <div>
+              <section class="detail-card"><h2>Seguimiento del cobro</h2><p class="card-sub">Anotación manual; no es un pago procesado por la app.</p><div class="detail-row"><span>Total acordado</span><span>Bs 690</span></div><div class="detail-row"><span>Registrado manualmente</span><span>Bs 200</span></div><div class="detail-row"><span>Saldo por cobrar</span><span>Bs 490</span></div><div style="margin-top:15px"><button class="button button-primary" style="width:100%" data-open-payment>Registrar cobro</button></div><div class="notice" style="margin-top:12px">No se guardan números de tarjeta, credenciales bancarias ni comprobantes sensibles.</div></section>
+              <section class="detail-card"><h2>Referencia de seguimiento</h2><p class="card-sub">Campos opcionales mientras el flujo se valida.</p><div class="detail-row"><span>Cliente</span><span>Comprador demo</span></div><div class="detail-row"><span>Contacto</span><span>No registrado</span></div><div class="detail-row"><span>Canal</span><span>Atención en tienda</span></div></section>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Navegación móvil"><button class="nav-item active" data-go="overview"><svg class="icon"><use href="#i-grid"/></svg>Resumen</button><button class="nav-item" data-go="orders"><svg class="icon"><use href="#i-box"/></svg>Pedidos</button><button class="nav-item" data-go="quotes"><svg class="icon"><use href="#i-note"/></svg>Cotizaciones</button><button class="nav-item" data-go="overview"><svg class="icon"><use href="#i-chart"/></svg>Reportes</button></nav>
+
+    <dialog id="new-record">
+      <form id="demo-form">
+        <div class="dialog-head"><div><h2>Nuevo registro</h2><p>Consulta o borrador de cotización</p></div><button class="close-button" type="button" data-close-dialog aria-label="Cerrar"><svg class="icon"><use href="#i-close"/></svg></button></div>
+        <div class="dialog-body"><div class="field"><label for="product">Producto o solicitud</label><input id="product" placeholder="Ej. SSD NVMe 1 TB" required></div><div class="field"><label for="variant">Marca o variante <span>(opcional)</span></label><input id="variant" placeholder="Modelo, capacidad, color…"></div><div class="field"><label for="quantity">Cantidad</label><input id="quantity" type="number" min="1" value="1"></div><div class="field"><label for="availability">Disponibilidad</label><select id="availability"><option>Por confirmar</option><option>Anotación manual: disponible</option><option>Anotación manual: sin disponibilidad</option></select></div><div class="notice">Este formulario es ilustrativo. Al guardar, no se conserva información.</div></div>
+        <div class="dialog-foot"><button class="button" type="button" data-close-dialog>Cancelar</button><button class="button button-primary" type="submit">Guardar vista previa</button></div>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden>Acción de demostración: no se guardó ningún dato.</div>
+
+    <script>
+      const screens = [...document.querySelectorAll('.screen')];
+      const breadcrumb = document.getElementById('breadcrumb');
+      const screenNames = { overview: 'Resumen', orders: 'Pedidos', quotes: 'Cotizaciones', detail: 'Detalle del pedido' };
+      function goTo(id) {
+        screens.forEach((screen) => { screen.hidden = screen.id !== id; });
+        breadcrumb.textContent = screenNames[id] || 'Resumen';
+        document.querySelectorAll('.nav-item[data-go]').forEach((item) => item.classList.toggle('active', item.dataset.go === id));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      document.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => goTo(button.dataset.go)));
+      document.querySelectorAll('[data-open-detail]').forEach((button) => button.addEventListener('click', () => goTo('detail')));
+      const dialog = document.getElementById('new-record');
+      document.querySelectorAll('[data-open-dialog]').forEach((button) => button.addEventListener('click', () => dialog.showModal()));
+      document.querySelectorAll('[data-open-payment]').forEach((button) => button.addEventListener('click', () => showToast('Vista de demostración: el cobro no se registró.')));
+      document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => dialog.close()));
+      const toast = document.getElementById('toast');
+      let toastTimer;
+      function showToast(message) {
+        toast.textContent = message;
+        toast.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toast.hidden = true; }, 3600);
+      }
+      document.getElementById('demo-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        dialog.close();
+        showToast('Acción de demostración: no se guardó ningún dato.');
+        event.currentTarget.reset();
+      });
+      document.querySelectorAll('.filter').forEach((button) => button.addEventListener('click', () => {
+        const group = button.closest('.filters');
+        group.querySelectorAll('.filter').forEach((filter) => filter.classList.remove('active'));
+        button.classList.add('active');
+      }));
+    </script>
+  </div>
+</body>
+</html>
